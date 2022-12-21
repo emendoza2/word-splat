@@ -81,7 +81,7 @@
 		return choose(wordList.filter((word) => regexp.test(word)).slice(0, 10)); // yeuch.. maybe could be partial or called
 	}
 
-	function handleKeydown(e: KeyboardEvent) {
+	function handleKeyup(e: KeyboardEvent) {
 		if (e.key === ' ') reset();
 	}
 
@@ -93,9 +93,9 @@
 	// TODO figure out the height stuff
 </script>
 
-<svelte:window on:keydown={handleKeydown} />
+<svelte:window on:keyup={handleKeyup} />
 
-<div class="game-container">
+<div class="game-container" class:bombed={gameState == GameState.Dead}>
 	{#if gameState == GameState.Guessing}
 		<h1>??????</h1>
 		<div class="text-container">
@@ -274,8 +274,11 @@
         -webkit-user-select: none;
 		-moz-user-select: none;
 		-ms-user-select: none;
-        user-select: none;
+        user-select: none;    
 	}
+    .bombed {
+        animation: flicker 200ms infinite;
+    }
 	.text-container {
 		font-family: 'Compagnon Medium', 'Compagnon-Roman', 'Courier', 'Cascadia Code', monospace;
 		font-size: 2em;
@@ -294,4 +297,15 @@
         left: 50%;
         transform: translate(-50%, -50%) */
 	}
+    @keyframes flicker {
+        0% {
+            background-color: #eee;
+        }
+        50% {
+            background-color: white;
+        }
+        100% {
+            background-color: #eee;
+        }
+    }
 </style>
