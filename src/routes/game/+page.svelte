@@ -39,7 +39,7 @@
 
 	// Game state tracking
 	let gameState = GameState.Loading;
-	let deathTimer: string | number | NodeJS.Timeout;
+	let deathTimer: number;
 
 	function cancelDeathTimer() {
 		if (deathTimer) clearTimeout(deathTimer);
