@@ -12,7 +12,6 @@
 		return new Array(length).fill(null).map(fn);
 	}
 	const chooseRandomLetter = () => choose<string>(letters);
-    $: console.log("Len", length);
 	$: randomLetters = (length > 0 && (length % 1) == 0) ? listGenerator(length, chooseRandomLetter) : [];
 	function randomInt(start: number, end?: number) {
 		if (!end) {

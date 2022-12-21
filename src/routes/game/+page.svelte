@@ -33,6 +33,7 @@
     const chooseNgram = () => choose(subset); // todo: convert to partial
 
 	let ngram: string;
+    let ngramHistory: string[] = [];
 	let hiddenWord: string;
 
     // Game state tracking
@@ -54,10 +55,18 @@
 	}
 	function reset() {
 		cancelDeathTimer();
+        if (ngram) ngramHistory = [...ngramHistory, ngram];
+        console.log(ngramHistory)
 		ngram = chooseNgram();
 		gameState = GameState.Guessing;
 		startDeathTimer();
 	}
+    function undo() {
+        if (ngramHistory.length > 0) {
+            ngram = ngramHistory[ngramHistory.length - 1];
+            ngramHistory = ngramHistory.slice(0, ngramHistory.length - 1);
+        }
+    }
 	function getWordForNgram(ngram: string) {
 		const regexp = new RegExp(ngram);
 		console.log(wordList.filter((word) => regexp.test(word)).slice(0, 10));
@@ -96,6 +105,9 @@
 		</div>
 		<p>
 			<button class="defuse-button" on:click={reset}>Defuse</button>
+            {#if ngramHistory.length > 0}
+                <button class="undo-button" on:click={undo}>↩</button>
+            {/if}
 		</p>
 		<p>↓</p>
 	{/if}
@@ -105,14 +117,17 @@
 			<RandomText length={Math.floor((nChars - hiddenWord.length) / 2)} letters={xletters} /><span
 				class="ngram"><HighlightWord word={hiddenWord} substring={ngram} /></span
 			><RandomText
-				length={nChars - hiddenWord.length - Math.floor((nChars - hiddenWord.length) / 2)}
+				length={nChars - hiddenWord.length - Math.abs(Math.floor((nChars - hiddenWord.length) / 2))}
 				letters={xletters}
 			/>
 			<br />
 			<RandomText length={Math.max(nChars, hiddenWord.length)} letters={xletters} />
 		</div>
-		<p>
+		<p class="button-container">
 			<button class="resume-button" on:click={reset}>Resume</button>
+            {#if ngramHistory.length > 0}
+                <button class="undo-button" on:click={undo}>↩</button>
+            {/if}
 		</p>
 		<p>:(</p>
 	{/if}
@@ -175,6 +190,9 @@
 		transform: translateY(0rem);
 		box-shadow: none;
 	}
+    .button-container {
+        position: relative;
+    }
 	.resume-button {
 		font-size: 1em;
 		font-family: 'Compagnon Bold';
@@ -187,6 +205,15 @@
 		background-color: black;
 		color: white;
 	}
+    .undo-button {
+        box-shadow: none;
+        background-color: transparent;
+        font-size: 2rem;
+        padding: 0.2rem;
+    }
+    .undo-button:hover, .undo-button:active {
+        background-color: transparent;
+    }
 	.defuse-button {
 		font-size: 1em;
 		background-color: lightgray;
@@ -210,7 +237,7 @@
 		left: 0;
 		right: 0;
 		bottom: 0;
-		overflow: hidden;
+		/* overflow: hidden; */
 		height: 100vh;
 		text-align: center;
 		font-size: 2em;
