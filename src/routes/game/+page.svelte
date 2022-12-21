@@ -6,41 +6,42 @@
 	// export const prerender = false; // disable ssr for this
 	// export const ssr = false; // disable ssr for this
 
-	import type { PageData } from './$types';
+	// import type { PageData } from './$types';
 	import RandomText from './RandomText.svelte';
 	import HighlightWord from './HighlightWord.svelte';
-	import { requestTimeout } from '../../util/rafTimers';
-	export let data: PageData;
-	const charSize = 40;
-	let nChars = 720 / charSize;
-	const difficulty = 1;
-	const maxDifficulty = 3;
-	const subset = ngramList.slice(
-		Math.floor((ngramList.length / maxDifficulty) * (difficulty - 1)),
-		Math.floor((ngramList.length / maxDifficulty) * difficulty)
-	);
-	const chooseNgram = () => choose(subset);
+	// import { requestTimeout } from '../../util/rafTimers';
 
-	let ngram: string;
-	const alphabet = 'ABCDEFGGHIJKLMNOPQRSTUVWXYZabcdefghijlmnopqrstuvwxyz';
-	const xletters = 'X';
-	enum GameState {
+    enum GameState {
 		Loading,
 		Guessing,
 		Dead
 	}
-	let gameState = GameState.Loading;
 
+	const charSize = 40;
+	const difficulty = 1;
+	const maxDifficulty = 3;
+    const maxGuessingTime = 5; // seconds
+    let nChars = 720 / charSize; // this changes dynamically
+
+    const alphabet = 'ABCDEFGGHIJKLMNOPQRSTUVWXYZabcdefghijlmnopqrstuvwxyz';
+	const xletters = 'X';
+
+	const subset = ngramList.slice(
+		Math.floor((ngramList.length / maxDifficulty) * (difficulty - 1)),
+		Math.floor((ngramList.length / maxDifficulty) * difficulty)
+	);
+    const chooseNgram = () => choose(subset); // todo: convert to partial
+
+	let ngram: string;
 	let hiddenWord: string;
 
+    // Game state tracking
+	let gameState = GameState.Loading;
 	let deathTimer: string | number | NodeJS.Timeout;
-
-	const maxGuessingTime = 5;
 
 	function cancelDeathTimer() {
 		if (deathTimer) clearTimeout(deathTimer);
 	}
-
 	function startDeathTimer() {
 		cancelDeathTimer();
 		deathTimer = setTimeout(die, maxGuessingTime * 1000);
@@ -63,9 +64,9 @@
 		return choose(wordList.filter((word) => regexp.test(word)).slice(0, 10)); // yeuch.. maybe could be partial or called
 	}
 
-    function handleKeydown(e: KeyboardEvent) {
-        if (e.key === " ") reset();
-    }
+	function handleKeydown(e: KeyboardEvent) {
+		if (e.key === ' ') reset();
+	}
 
 	onMount(() => {
 		nChars = Math.floor(Math.min(window?.innerWidth || 720, 720) / charSize / 1.4);
@@ -121,8 +122,7 @@
 	@font-face {
 		font-family: 'Compagnon Roman';
 		src: url('/fonts/Compagnon-Roman.eot');
-		src: url('/fonts/Compagnon-Roman.eot?#iefix')
-				format('embedded-opentype'),
+		src: url('/fonts/Compagnon-Roman.eot?#iefix') format('embedded-opentype'),
 			url('/fonts/Compagnon-Roman.woff') format('woff2'),
 			url('/fonts/Compagnon-Roman.woff2') format('woff'),
 			url('/fonts/Compagnon-Roman.ttf') format('truetype'),
@@ -130,11 +130,10 @@
 		font-weight: normal;
 		font-style: normal;
 	}
-    @font-face {
+	@font-face {
 		font-family: 'Compagnon Bold';
 		src: url('/fonts/Compagnon-Bold.eot');
-		src: url('/fonts/Compagnon-Bold.eot?#iefix')
-				format('embedded-opentype'),
+		src: url('/fonts/Compagnon-Bold.eot?#iefix') format('embedded-opentype'),
 			url('/fonts/Compagnon-Bold.woff') format('woff2'),
 			url('/fonts/Compagnon-Bold.woff2') format('woff'),
 			url('/fonts/Compagnon-Bold.ttf') format('truetype'),
@@ -142,11 +141,10 @@
 		font-weight: bold;
 		font-style: normal;
 	}
-    @font-face {
+	@font-face {
 		font-family: 'Compagnon Medium';
 		src: url('/fonts/Compagnon-Medium.eot');
-		src: url('/fonts/Compagnon-Medium.eot?#iefix')
-				format('embedded-opentype'),
+		src: url('/fonts/Compagnon-Medium.eot?#iefix') format('embedded-opentype'),
 			url('/fonts/Compagnon-Medium.woff') format('woff2'),
 			url('/fonts/Compagnon-Medium.woff2') format('woff'),
 			url('/fonts/Compagnon-Medium.ttf') format('truetype'),

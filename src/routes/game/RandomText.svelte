@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { requestInterval } from '../../util/rafTimers';
-	import { onMount, tick } from 'svelte';
+	import { onDestroy, onMount, tick } from 'svelte';
 	import choose from '../../util/choose';
 
 	/** integer with length in chars of the random text */
@@ -30,10 +30,13 @@
 		// requestAnimationFrame(draw)
 	}
 
-	let interval;
+	let interval: number;
 	onMount(() => {
 		interval = requestInterval(draw, 66);
 	});
+    onDestroy(() => {
+        if (interval) cancelAnimationFrame(interval);
+    })
 </script>
 
 <span>{randomLetters.join('')}</span>
