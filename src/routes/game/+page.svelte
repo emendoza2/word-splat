@@ -11,7 +11,7 @@
 	import HighlightWord from './HighlightWord.svelte';
 	// import { requestTimeout } from '../../util/rafTimers';
 
-    enum GameState {
+	enum GameState {
 		Loading,
 		Guessing,
 		Dead
@@ -20,53 +20,61 @@
 	const charSize = 40;
 	const difficulty = 1;
 	const maxDifficulty = 3;
-    const maxGuessingTime = 5; // seconds
-    let nChars = 720 / charSize; // this changes dynamically
+	const maxGuessingTime = 5; // seconds
+	const undoGuessingTime = 3;
+	let nChars = 720 / charSize; // this changes dynamically
 
-    const alphabet = 'ABCDEFGGHIJKLMNOPQRSTUVWXYZabcdefghijlmnopqrstuvwxyz';
+	const alphabet = 'ABCDEFGGHIJKLMNOPQRSTUVWXYZabcdefghijlmnopqrstuvwxyz';
 	const xletters = 'X';
 
 	const subset = ngramList.slice(
 		Math.floor((ngramList.length / maxDifficulty) * (difficulty - 1)),
 		Math.floor((ngramList.length / maxDifficulty) * difficulty)
 	);
-    const chooseNgram = () => choose(subset); // todo: convert to partial
+	const chooseNgram = () => choose(subset); // todo: convert to partial
 
 	let ngram: string;
-    let ngramHistory: string[] = [];
+	let ngramHistory: string[] = [];
 	let hiddenWord: string;
 
-    // Game state tracking
+	// Game state tracking
 	let gameState = GameState.Loading;
 	let deathTimer: string | number | NodeJS.Timeout;
 
 	function cancelDeathTimer() {
 		if (deathTimer) clearTimeout(deathTimer);
 	}
-	function startDeathTimer() {
+	function startDeathTimer(ms: number = maxGuessingTime * 1000) {
 		cancelDeathTimer();
-		deathTimer = setTimeout(die, maxGuessingTime * 1000);
+		deathTimer = setTimeout(die, ms);
 		return deathTimer;
 	}
 	function die() {
 		cancelDeathTimer();
 		hiddenWord = getWordForNgram(ngram);
 		gameState = GameState.Dead;
+		console.log(nChars, hiddenWord.length);
+		console.log(
+			nChars - hiddenWord.length - Math.floor(Math.abs((nChars - hiddenWord.length) / 2))
+		);
 	}
 	function reset() {
 		cancelDeathTimer();
-        if (ngram) ngramHistory = [...ngramHistory, ngram];
-        console.log(ngramHistory)
+		if (ngram) ngramHistory = [...ngramHistory, ngram];
+		console.log(ngramHistory);
 		ngram = chooseNgram();
 		gameState = GameState.Guessing;
 		startDeathTimer();
 	}
-    function undo() {
-        if (ngramHistory.length > 0) {
-            ngram = ngramHistory[ngramHistory.length - 1];
-            ngramHistory = ngramHistory.slice(0, ngramHistory.length - 1);
-        }
-    }
+	function undo() {
+		if (ngramHistory.length > 0) {
+			ngram = ngramHistory[ngramHistory.length - 1];
+			ngramHistory = ngramHistory.slice(0, ngramHistory.length - 1);
+			cancelDeathTimer();
+			gameState = GameState.Guessing;
+			startDeathTimer(undoGuessingTime * 1000);
+		}
+	}
 	function getWordForNgram(ngram: string) {
 		const regexp = new RegExp(ngram);
 		console.log(wordList.filter((word) => regexp.test(word)).slice(0, 10));
@@ -78,8 +86,8 @@
 	}
 
 	onMount(() => {
-		nChars = Math.floor(Math.min(window?.innerWidth || 720, 720) / charSize / 1.4);
-		reset(); // i.e. start
+        reset(); // i.e. start
+		nChars = Math.floor(Math.min(window?.innerWidth || 720, 720) / charSize / 1.4) - (ngram.length % 2);
 	});
 
 	// TODO figure out the height stuff
@@ -88,46 +96,54 @@
 <svelte:window on:keydown={handleKeydown} />
 
 <div class="game-container">
-	<h1>Word Bomb</h1>
 	{#if gameState == GameState.Guessing}
+		<h1>??????</h1>
 		<div class="text-container">
 			<!-- {#each Array(3) as _, i}
-            {/each} -->
+                {/each} -->
 			<RandomText length={nChars} letters={alphabet} />
 			<br />
-			<RandomText length={Math.floor(nChars / 2) - 1} letters={alphabet} /><span class="ngram"
+			<RandomText length={Math.floor((nChars - ngram.length) / 2)} letters={alphabet} /><span class="ngram"
 				>{ngram}</span
-			><RandomText length={Math.floor(nChars / 2) + 1 - ngram.length} letters={alphabet} />
+			><RandomText length={nChars - ngram.length - Math.floor(Math.abs((nChars - ngram.length) / 2))} letters={alphabet} />
 			<br />
 			<RandomText length={nChars} letters={alphabet} />
 			<!-- {#each Array(3) as _, i}
-            {/each} -->
+                    {/each} -->
 		</div>
 		<p>
 			<button class="defuse-button" on:click={reset}>Defuse</button>
-            {#if ngramHistory.length > 0}
-                <button class="undo-button" on:click={undo}>↩</button>
-            {/if}
+			{#if ngramHistory.length > 0}
+				<button class="undo-button" on:click={undo}>↩</button>
+			{/if}
 		</p>
 		<p>↓</p>
 	{/if}
 	{#if gameState == GameState.Dead}
+		<h1><HighlightWord word={hiddenWord} substring={ngram} /></h1>
 		<div class="text-container">
-			<RandomText length={Math.max(nChars, hiddenWord.length)} letters={xletters} /><br />
-			<RandomText length={Math.floor((nChars - hiddenWord.length) / 2)} letters={xletters} /><span
+			<RandomText length={nChars} letters={xletters} />
+			<br />
+			<RandomText length={Math.floor((nChars - ngram.length) / 2)} letters={xletters} /><span class="ngram"
+				>{ngram}</span
+			><RandomText length={nChars - ngram.length - Math.floor(Math.abs((nChars - ngram.length) / 2))} letters={xletters} />
+			<br />
+			<RandomText length={nChars} letters={xletters} />
+			<!-- <RandomText length={Math.max(nChars, hiddenWord.length)} letters={xletters} /><br />
+			<RandomText length={Math.floor(((nChars - hiddenWord.length) / 2))} letters={xletters} /><span
 				class="ngram"><HighlightWord word={hiddenWord} substring={ngram} /></span
 			><RandomText
-				length={nChars - hiddenWord.length - Math.abs(Math.floor((nChars - hiddenWord.length) / 2))}
+				length={nChars - hiddenWord.length - Math.floor(Math.abs((nChars - hiddenWord.length) / 2))}
 				letters={xletters}
 			/>
 			<br />
-			<RandomText length={Math.max(nChars, hiddenWord.length)} letters={xletters} />
+			<RandomText length={Math.max(nChars, hiddenWord.length)} letters={xletters} /> -->
 		</div>
 		<p class="button-container">
 			<button class="resume-button" on:click={reset}>Resume</button>
-            {#if ngramHistory.length > 0}
-                <button class="undo-button" on:click={undo}>↩</button>
-            {/if}
+			{#if ngramHistory.length > 0}
+				<button class="undo-button" on:click={undo}>↩</button>
+			{/if}
 		</p>
 		<p>:(</p>
 	{/if}
@@ -169,6 +185,11 @@
 	}
 	h1 {
 		font-size: 2rem;
+        pointer-events: none;
+		-webkit-user-select: none;
+		-moz-user-select: none;
+		-ms-user-select: none;
+        user-select: none;
 		font-family: 'Compagnon Roman';
 	}
 	.ngram {
@@ -190,9 +211,9 @@
 		transform: translateY(0rem);
 		box-shadow: none;
 	}
-    .button-container {
-        position: relative;
-    }
+	.button-container {
+		position: relative;
+	}
 	.resume-button {
 		font-size: 1em;
 		font-family: 'Compagnon Bold';
@@ -205,15 +226,16 @@
 		background-color: black;
 		color: white;
 	}
-    .undo-button {
-        box-shadow: none;
-        background-color: transparent;
-        font-size: 2rem;
-        padding: 0.2rem;
-    }
-    .undo-button:hover, .undo-button:active {
-        background-color: transparent;
-    }
+	.undo-button {
+		box-shadow: none;
+		background-color: transparent;
+		font-size: 2rem;
+		padding: 0.2rem;
+	}
+	.undo-button:hover,
+	.undo-button:active {
+		background-color: transparent;
+	}
 	.defuse-button {
 		font-size: 1em;
 		background-color: lightgray;
@@ -232,16 +254,27 @@
 		background-color: black;
 	}
 	.game-container {
-		position: absolute;
+		/* position: absolute;
 		top: 0;
 		left: 0;
 		right: 0;
 		bottom: 0;
-		/* overflow: hidden; */
-		height: 100vh;
+		/* overflow: hidden;
+		height: 100vh; */
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
 		text-align: center;
 		font-size: 2em;
 		font-family: 'Compagnon Roman';
+		min-height: 100vh;
+		max-width: 100%;
+		overflow-x: auto;
+        -webkit-user-select: none;
+		-moz-user-select: none;
+		-ms-user-select: none;
+        user-select: none;
 	}
 	.text-container {
 		font-family: 'Compagnon Medium', 'Compagnon-Roman', 'Courier', 'Cascadia Code', monospace;

@@ -23,7 +23,7 @@
 
 	async function draw() {
 		await tick();
-		const randomNumbers = listGenerator(randomInt(3), () => randomInt(length));
+		const randomNumbers = listGenerator(randomInt(3), () => randomInt(length - 1));
 		randomNumbers.forEach(mutateRandomLetter); // side effects
 		// randomLetters = randomLetters // side effects
 		// requestAnimationFrame(draw)
