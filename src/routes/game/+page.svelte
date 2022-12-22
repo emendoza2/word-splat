@@ -17,19 +17,18 @@
 		Dead
 	}
 
-	const charSize = 40;
-	const difficulty = 1;
+	import { difficulty, maxGuessingTime } from '$lib/store.js';
 	const maxDifficulty = 3;
-	const maxGuessingTime = 5; // seconds
 	const undoGuessingTime = 3;
+	const charSize = 40;
 	let nChars = 720 / charSize; // this changes dynamically
 
 	const alphabet = 'ABCDEFGGHIJKLMNOPQRSTUVWXYZabcdefghijlmnopqrstuvwxyz';
 	const xletters = 'X';
 
 	const subset = ngramList.slice(
-		Math.floor((ngramList.length / maxDifficulty) * (difficulty - 1)),
-		Math.floor((ngramList.length / maxDifficulty) * difficulty)
+		Math.floor((ngramList.length / maxDifficulty) * ($difficulty - 1)),
+		Math.floor((ngramList.length / maxDifficulty) * $difficulty)
 	);
 	const chooseNgram = () => choose(subset); // todo: convert to partial
 
@@ -40,12 +39,12 @@
 	// Game state tracking
 	let gameState = GameState.Loading;
 	let deathTimer: number;
-    let deathIcon: string;
+	let deathIcon: string;
 
 	function cancelDeathTimer() {
 		if (deathTimer) clearTimeout(deathTimer);
 	}
-	function startDeathTimer(ms: number = maxGuessingTime * 1000) {
+	function startDeathTimer(ms: number = $maxGuessingTime * 1000) {
 		cancelDeathTimer();
 		deathTimer = setTimeout(die, ms);
 		return deathTimer;
@@ -54,14 +53,14 @@
 		cancelDeathTimer();
 		hiddenWord = getWordForNgram(ngram);
 		gameState = GameState.Dead;
-        deathIcon = choose([":(", "bye!", "🗿", "☠"]);
+		deathIcon = choose([':(', 'bye!', '🗿', '☠']);
 	}
 	function reset() {
 		cancelDeathTimer();
 		if (ngram) ngramHistory = [...ngramHistory, ngram];
 		console.log(ngramHistory);
 		ngram = chooseNgram();
-        // nChars = nChars + ((nChars + ngram.length) % 2) * (1 - ((ngram.length % 2) * 2))
+		// nChars = nChars + ((nChars + ngram.length) % 2) * (1 - ((ngram.length % 2) * 2))
 		gameState = GameState.Guessing;
 		startDeathTimer();
 	}
@@ -88,7 +87,7 @@
 		reset(); // i.e. start
 		nChars =
 			Math.floor(Math.min(window?.innerWidth || 720, 720) / charSize / 1.4) - (ngram.length % 2);
-        nChars -= (1 - nChars % 2);
+		nChars += 1 - (nChars % 2);
 	});
 
 	// TODO figure out the height stuff
@@ -97,15 +96,17 @@
 <svelte:window on:keyup={handleKeyup} />
 
 <div class="game-container">
+    <a class="settings-button" href="game/settings">⚙</a>
 	{#if gameState == GameState.Guessing}
-		<div class="hidden-word">??????</div>
+		<div class="play-area"> 
+        <div class="hidden-word">??????</div>
 		<div class="text-container">
 			<!-- {#each Array(3) as _, i}
                 {/each} -->
 			<RandomText length={nChars} letters={alphabet} />
 			<br />
-			<RandomText length={Math.floor((nChars - 3) / 2)} letters={alphabet} /><span
-				class="ngram">{ngram}</span
+			<RandomText length={Math.floor((nChars - 3) / 2)} letters={alphabet} /><span class="ngram"
+				>{ngram}</span
 			><RandomText
 				length={nChars - 3 - Math.floor(Math.abs((nChars - 3) / 2))}
 				letters={alphabet}
@@ -116,20 +117,20 @@
                     {/each} -->
 		</div>
 		<div class="button-container">
+            <button class="undo-button" on:click={undo} disabled={ngramHistory.length === 0}>←</button>
 			<button class="defuse-button" on:click={reset}>Defuse</button>
-			{#if ngramHistory.length > 0}
-                <button class="undo-button" on:click={undo}>←</button>
-			{/if}
+		</div>
         </div>
-		<p style="height: 1em">↓</p>
+		<div class="indicator">↓</div>
 	{/if}
 	{#if gameState == GameState.Dead}
+    <div class="play-area">
 		<div class="hidden-word"><HighlightWord word={hiddenWord} substring={ngram} /></div>
 		<div class="text-container" class:bombed={gameState == GameState.Dead}>
 			<RandomText length={nChars} letters={xletters} />
 			<br />
-			<RandomText length={Math.floor((nChars - 3) / 2)} letters={xletters} /><span
-				class="ngram">{ngram}</span
+			<RandomText length={Math.floor((nChars - 3) / 2)} letters={xletters} /><span class="ngram"
+				>{ngram}</span
 			><RandomText
 				length={nChars - 3 - Math.floor(Math.abs((nChars - 3) / 2))}
 				letters={xletters}
@@ -147,21 +148,20 @@
 			<RandomText length={Math.max(nChars, hiddenWord.length)} letters={xletters} /> -->
 		</div>
 		<div class="button-container">
+            <button class="undo-button" on:click={undo} disabled={ngramHistory.length === 0}>←</button>
 			<button class="resume-button" on:click={reset}>Resume</button>
-			{#if ngramHistory.length > 0}
-				<button class="undo-button" on:click={undo}>←</button>
-			{/if}
-        </div>
-		<p style="height: 1em">{deathIcon}</p>
+		</div>
+    </div>
+		<div class="indicator">{deathIcon}</div>
 	{/if}
 </div>
 
 <style>
-    .game-container {
+	.game-container {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		justify-content: center;
+		justify-content: space-between;
 		text-align: center;
 		font-size: 2em;
 		font-family: 'Compagnon Roman', 'Courier New', 'Courier', monospace;
@@ -172,9 +172,9 @@
 		-moz-user-select: none;
 		-ms-user-select: none;
 		user-select: none;
-        background-color: #eee;
+		background-color: #eee;
 	}
-    .text-container {
+	.text-container {
 		font-family: 'Compagnon Medium', 'Courier', monospace;
 		font-size: 2em;
 		color: gray;
@@ -186,12 +186,12 @@
 		user-select: none;
 		text-transform: uppercase;
 		font-variant-ligatures: none;
-        padding: 0 1rem 1rem 1rem;
-        border-radius: 1rem;
-        border: 4px solid lightgray;
-        background-color: white;
-        box-shadow: 0 4px black;
-        margin-bottom: 2rem;
+		padding: 0 1rem 1rem 1rem;
+		border-radius: 1rem;
+		border: 4px solid lightgray;
+		background-color: white;
+		box-shadow: 0 4px black;
+		margin-bottom: 2rem;
 		/* position: absolute; */
 		/* line-height: 0.7; */
 		/* top: 50%;
@@ -209,14 +209,14 @@
 		-ms-user-select: none;
 		user-select: none;
 		font-family: 'Compagnon Roman', 'Courier New', 'Courier', monospace;
-        margin-bottom: 1rem;
+		margin-bottom: 1rem;
 	}
 	.ngram {
 		font-family: 'Compagnon Medium', 'Courier New', 'Courier', monospace;
 		color: black;
-        width: 3ch;
-        display: inline-block;
-        text-align: center;
+		width: 3ch;
+		display: inline-block;
+		text-align: center;
 	}
 	button {
 		border: none;
@@ -225,13 +225,13 @@
 		box-shadow: 0 0.5rem black;
 		font-family: 'Compagnon Bold', 'Courier New', 'Courier', monospace;
 		transform: translateY(-0.5rem);
-        -webkit-tap-highlight-color: rgba(0,0,0,0);
-        -webkit-tap-highlight-color: transparent;
-        -webkit-touch-callout: none;
-        -webkit-user-select: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
-        user-select: none;
+		-webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+		-webkit-tap-highlight-color: transparent;
+		-webkit-touch-callout: none;
+		-webkit-user-select: none;
+		-moz-user-select: none;
+		-ms-user-select: none;
+		user-select: none;
 	}
 	button:hover {
 		cursor: pointer;
@@ -258,17 +258,17 @@
 	.undo-button {
 		/* box-shadow: none;
 		background-color: transparent; */
-        background-color: lightgray;
-        padding: 0.3rem 1.2rem 1rem 1.2rem;
+		background-color: lightgray;
+		padding: 0.3rem 1.2rem 1rem 1.2rem;
 		font-size: 1em;
-        font-family: 'Compagnon Roman', 'Courier New', 'Courier', monospace;
+		font-family: 'Compagnon Roman', 'Courier New', 'Courier', monospace;
 		/* padding: 0.2rem; */
-        /* transform: translate(0) */
+		/* transform: translate(0) */
 	}
 	.undo-button:hover,
 	.undo-button:active {
 		/* background-color: transparent; */
-	}
+    }
 	.defuse-button {
 		font-size: 1em;
 		background-color: lightgray;
@@ -286,6 +286,23 @@
 		color: white;
 		background-color: black;
 	}
+    .play-area {
+        padding: 1rem 0 1rem 0;
+    }
+    .indicator {
+        height: 1.3em; 
+        font-size: 1.3em;
+        justify-self: end;
+        padding: 1rem 0 1rem 0;
+    }
+    .settings-button {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        font-size: 2rem;
+        color: gray;
+        text-decoration: none;
+    }
 	@keyframes flicker {
 		0% {
 			background-color: #eee;
