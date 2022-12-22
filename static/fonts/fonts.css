@@ -1,0 +1,33 @@
+@font-face {
+    font-family: 'Compagnon Roman';
+    src: url('/fonts/Compagnon-Roman.eot');
+    src: url('/fonts/Compagnon-Roman.eot?#iefix') format('embedded-opentype'),
+        url('/fonts/Compagnon-Roman.woff') format('woff2'),
+        url('/fonts/Compagnon-Roman.woff2') format('woff'),
+        url('/fonts/Compagnon-Roman.ttf') format('truetype'),
+        url('/fonts/Compagnon-Roman.svg') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'Compagnon Bold';
+    src: url('/fonts/Compagnon-Bold.eot');
+    src: url('/fonts/Compagnon-Bold.eot?#iefix') format('embedded-opentype'),
+        url('/fonts/Compagnon-Bold.woff') format('woff2'),
+        url('/fonts/Compagnon-Bold.woff2') format('woff'),
+        url('/fonts/Compagnon-Bold.ttf') format('truetype'),
+        url('/fonts/Compagnon-Bold.svg') format('svg');
+    font-weight: bold;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'Compagnon Medium';
+    src: url('/fonts/Compagnon-Medium.eot');
+    src: url('/fonts/Compagnon-Medium.eot?#iefix') format('embedded-opentype'),
+        url('/fonts/Compagnon-Medium.woff') format('woff2'),
+        url('/fonts/Compagnon-Medium.woff2') format('woff'),
+        url('/fonts/Compagnon-Medium.ttf') format('truetype'),
+        url('/fonts/Compagnon-Medium.svg') format('svg');
+    font-weight: bold;
+    font-style: normal;
+}
