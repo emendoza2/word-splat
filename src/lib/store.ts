@@ -15,14 +15,14 @@ import { browser } from '$app/environment';
 export const maxGuessingTime = writable<number>(); // seconds
 export const difficulty = writable<number>();
 
-function linkToLocalStorage<T>(w: Writable<T>, key: string) {
-    w.set(JSON.parse(localStorage.getItem(key) || "null") || 1);
+function linkToLocalStorage<T>(w: Writable<T>, key: string, defaultValue: T) {
+    w.set(JSON.parse(localStorage.getItem(key) || "null") || defaultValue);
     w.subscribe((value: T)  => {
         localStorage.setItem(key, JSON.stringify(value));
     });
 }
 
 if (browser) {
-    linkToLocalStorage<number>(maxGuessingTime, "maxGuessingTime")
-    linkToLocalStorage<number>(difficulty, "difficulty")
+    linkToLocalStorage<number>(maxGuessingTime, "maxGuessingTime", 5)
+    linkToLocalStorage<number>(difficulty, "difficulty", 1)
 }

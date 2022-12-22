@@ -265,10 +265,6 @@
 		/* padding: 0.2rem; */
 		/* transform: translate(0) */
 	}
-	.undo-button:hover,
-	.undo-button:active {
-		/* background-color: transparent; */
-    }
 	.defuse-button {
 		font-size: 1em;
 		background-color: lightgray;
@@ -287,13 +283,13 @@
 		background-color: black;
 	}
     .play-area {
-        padding: 1rem 0 1rem 0;
+        padding: 3rem 0 1rem 0;
     }
     .indicator {
         height: 1.3em; 
         font-size: 1.3em;
         justify-self: end;
-        padding: 1rem 0 1rem 0;
+        padding: 1rem 0 3rem 0;
     }
     .settings-button {
         position: absolute;

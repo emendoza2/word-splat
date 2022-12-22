@@ -31,6 +31,8 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"@capacitor/cli": "^4.6.1",
+		"@capacitor/core": "^4.6.1",
 		"ramda": "^0.28.0"
 	}
 }
