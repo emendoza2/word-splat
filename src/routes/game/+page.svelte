@@ -3,6 +3,8 @@
 	import ngramList from '../../util/ngramList';
 	import wordList from '../../util/wordList';
 	import { onMount } from 'svelte';
+	import { draw, crossfade, slide } from 'svelte/transition';
+	import { Howl, Howler } from 'howler';
 	// export const prerender = false; // disable ssr for this
 	// export const ssr = false; // disable ssr for this
 
@@ -38,8 +40,16 @@
 
 	// Game state tracking
 	let gameState = GameState.Loading;
-	let deathTimer: number;
+	let deathTimer: number | NodeJS.Timeout;
 	let deathIcon: string;
+
+	const gameSounds = new Howl({
+		src: ['sounds/gameSounds.webm', 'sounds/gameSounds.mp3'],
+		sprite: {
+			next: [0, 124.98866213151926],
+			lose: [2000, 1457.1882086167802]
+		}
+	});
 
 	function cancelDeathTimer() {
 		if (deathTimer) clearTimeout(deathTimer);
@@ -54,6 +64,7 @@
 		hiddenWord = getWordForNgram(ngram);
 		gameState = GameState.Dead;
 		deathIcon = choose([':(', 'bye!', '🗿', '☠']);
+		gameSounds.play("lose")
 	}
 	function reset() {
 		cancelDeathTimer();
@@ -63,6 +74,7 @@
 		// nChars = nChars + ((nChars + ngram.length) % 2) * (1 - ((ngram.length % 2) * 2))
 		gameState = GameState.Guessing;
 		startDeathTimer();
+		gameSounds.play("next")
 	}
 	function undo() {
 		if (ngramHistory.length > 0) {
@@ -96,48 +108,48 @@
 <svelte:window on:keyup={handleKeyup} />
 
 <div class="game-container">
-    <a class="settings-button" href="game/settings">⚙</a>
+	<a class="settings-button" href="game/settings">⚙</a>
 	{#if gameState == GameState.Guessing}
-		<div class="play-area"> 
-        <div class="hidden-word">??????</div>
-		<div class="text-container">
-			<!-- {#each Array(3) as _, i}
+		<div class="play-area">
+			<div class="hidden-word">??????</div>
+			<div class="text-container">
+					<RandomText length={nChars} letters={alphabet} />
+					<br />
+					<RandomText length={Math.floor((nChars - 3) / 2)} letters={alphabet} /><span class="ngram"
+						>{ngram}</span
+					><RandomText
+						length={nChars - 3 - Math.floor(Math.abs((nChars - 3) / 2))}
+						letters={alphabet}
+					/>
+					<br />
+					<RandomText length={nChars} letters={alphabet} />
+				<!-- {#each Array(3) as _, i}
                 {/each} -->
-			<RandomText length={nChars} letters={alphabet} />
-			<br />
-			<RandomText length={Math.floor((nChars - 3) / 2)} letters={alphabet} /><span class="ngram"
-				>{ngram}</span
-			><RandomText
-				length={nChars - 3 - Math.floor(Math.abs((nChars - 3) / 2))}
-				letters={alphabet}
-			/>
-			<br />
-			<RandomText length={nChars} letters={alphabet} />
-			<!-- {#each Array(3) as _, i}
+				<!-- {#each Array(3) as _, i}
                     {/each} -->
+			</div>
+			<div class="button-container">
+				<button class="undo-button" on:click={undo} disabled={ngramHistory.length === 0}>←</button>
+				<button class="defuse-button" on:click={reset}>Defuse</button>
+			</div>
 		</div>
-		<div class="button-container">
-            <button class="undo-button" on:click={undo} disabled={ngramHistory.length === 0}>←</button>
-			<button class="defuse-button" on:click={reset}>Defuse</button>
-		</div>
-        </div>
 		<div class="indicator">↓</div>
 	{/if}
 	{#if gameState == GameState.Dead}
-    <div class="play-area">
-		<div class="hidden-word"><HighlightWord word={hiddenWord} substring={ngram} /></div>
-		<div class="text-container" class:bombed={gameState == GameState.Dead}>
-			<RandomText length={nChars} letters={xletters} />
-			<br />
-			<RandomText length={Math.floor((nChars - 3) / 2)} letters={xletters} /><span class="ngram"
-				>{ngram}</span
-			><RandomText
-				length={nChars - 3 - Math.floor(Math.abs((nChars - 3) / 2))}
-				letters={xletters}
-			/>
-			<br />
-			<RandomText length={nChars} letters={xletters} />
-			<!-- <RandomText length={Math.max(nChars, hiddenWord.length)} letters={xletters} /><br />
+		<div class="play-area">
+			<div class="hidden-word"><HighlightWord word={hiddenWord} substring={ngram} /></div>
+			<div class="text-container" class:bombed={gameState == GameState.Dead}>
+				<RandomText length={nChars} letters={xletters} />
+				<br />
+				<RandomText length={Math.floor((nChars - 3) / 2)} letters={xletters} /><span class="ngram"
+					>{ngram}</span
+				><RandomText
+					length={nChars - 3 - Math.floor(Math.abs((nChars - 3) / 2))}
+					letters={xletters}
+				/>
+				<br />
+				<RandomText length={nChars} letters={xletters} />
+				<!-- <RandomText length={Math.max(nChars, hiddenWord.length)} letters={xletters} /><br />
 			<RandomText length={Math.floor(((nChars - hiddenWord.length) / 2))} letters={xletters} /><span
 				class="ngram"><HighlightWord word={hiddenWord} substring={ngram} /></span
 			><RandomText
@@ -146,12 +158,12 @@
 			/>
 			<br />
 			<RandomText length={Math.max(nChars, hiddenWord.length)} letters={xletters} /> -->
+			</div>
+			<div class="button-container">
+				<button class="undo-button" on:click={undo} disabled={ngramHistory.length === 0}>←</button>
+				<button class="resume-button" on:click={reset}>Resume</button>
+			</div>
 		</div>
-		<div class="button-container">
-            <button class="undo-button" on:click={undo} disabled={ngramHistory.length === 0}>←</button>
-			<button class="resume-button" on:click={reset}>Resume</button>
-		</div>
-    </div>
 		<div class="indicator">{deathIcon}</div>
 	{/if}
 </div>
@@ -282,23 +294,23 @@
 		color: white;
 		background-color: black;
 	}
-    .play-area {
-        padding: 3rem 0 1rem 0;
-    }
-    .indicator {
-        height: 1.3em; 
-        font-size: 1.3em;
-        justify-self: end;
-        padding: 1rem 0 3rem 0;
-    }
-    .settings-button {
-        position: absolute;
-        top: 1rem;
-        right: 1rem;
-        font-size: 2rem;
-        color: gray;
-        text-decoration: none;
-    }
+	.play-area {
+		padding: 3rem 0 1rem 0;
+	}
+	.indicator {
+		height: 1.3em;
+		font-size: 1.3em;
+		justify-self: end;
+		padding: 1rem 0 3rem 0;
+	}
+	.settings-button {
+		position: absolute;
+		top: 1rem;
+		right: 1rem;
+		font-size: 2rem;
+		color: gray;
+		text-decoration: none;
+	}
 	@keyframes flicker {
 		0% {
 			background-color: #eee;
