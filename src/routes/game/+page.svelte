@@ -51,6 +51,10 @@
 		}
 	});
 
+	const gameMusic = new Howl({
+		src: ['sounds/jazzcomedy.mp3']
+	})
+
 	function cancelDeathTimer() {
 		if (deathTimer) clearTimeout(deathTimer);
 	}
@@ -100,6 +104,7 @@
 		nChars =
 			Math.floor(Math.min(window?.innerWidth || 720, 720) / charSize / 1.4) - (ngram.length % 2);
 		nChars += 1 - (nChars % 2);
+		gameMusic.play();
 	});
 
 	// TODO figure out the height stuff

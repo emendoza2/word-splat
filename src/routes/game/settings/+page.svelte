@@ -29,6 +29,12 @@
 		<p>
 			<a class="start-button" href="/game">Start</a>
 		</p>
+		<p>
+			<small>
+				Music by bensound.com
+				Sounds from mixkit.com
+			</small>
+		</p>
 	</div>
 </div>
 
