@@ -1,4 +1,5 @@
 <svelte:head>
+    <title>Word Splat</title>
     <link href="/fonts/fonts.css" rel="stylesheet" />
     <link rel="preload" href="/fonts/Compagnon-Bold.woff2" as="font" />
     <link rel="preload" href="/fonts/Compagnon-Medium.woff2" as="font" />
@@ -43,7 +44,8 @@
 {/if}
 <style>
     #preloader {
-        font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        font-family: 'Courier New', Courier, monospace;
+        font-weight: bold;
         display: flex;
         align-items: center;
         justify-content: center;

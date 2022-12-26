@@ -4,6 +4,7 @@
 	import wordList from '../../util/wordList';
 	import { onMount, onDestroy } from 'svelte';
 	import { draw, crossfade, slide } from 'svelte/transition';
+	import typewriter from '../../util/typewriter';
 	import { Howl, Howler } from 'howler';
 	// export const prerender = false; // disable ssr for this
 	// export const ssr = false; // disable ssr for this
@@ -20,7 +21,7 @@
 		Dead
 	}
 
-	import { difficulty, maxGuessingTime, music } from '$lib/store.js';
+	import { difficulty, maxGuessingTime, musicVolume, sfxVolume } from '$lib/store.js';
 	const maxDifficulty = 3;
 	const undoGuessingTime = 3;
 	const charSize = 40;
@@ -29,10 +30,11 @@
 	const alphabet = 'ABCDEFGGHIJKLMNOPQRSTUVWXYZabcdefghijlmnopqrstuvwxyz';
 	const xletters = 'X';
 
-	const subset = ngramList.slice(
+	let subset = ngramList.slice(
 		Math.floor((ngramList.length / maxDifficulty) * ($difficulty - 1)),
 		Math.floor((ngramList.length / maxDifficulty) * $difficulty)
 	);
+	const originalSubset = [...subset];
 	
 	let ngram: string;
 	let ngramHistory: string[] = [];
@@ -44,9 +46,16 @@
 	let deathIcon: string;
 
 	// slowly walk down the ngram list
+	const ngramWindow = 100; // how many words to choose from. Higher is less predictable.
+	function clamp(min: number = -Infinity, max: number = Infinity, n: number) {
+		return Math.min(max, Math.max(min, n))
+	}
 	const chooseNgram = () => {
 		const ngramIndex = ngram ? subset.indexOf(ngram) : 0;
-		return choose(subset.slice(Math.max(ngramIndex - (gameState == GameState.Dead ? 100 : 0), 0), Math.min(ngramIndex + 100, subset.length))); // todo: convert to partial
+		const shift = gameState == GameState.Dead ? ngramWindow : ngramWindow / 5; // while they are losing, choose from easier words
+		const start = clamp(0, subset.length - ngramWindow, ngramIndex - shift)
+		const end = start + ngramWindow // this can never go over the length of the subset
+		return choose(subset.slice(start, end)); // todo: convert to partial
 	}
 
 	const gameSounds = new Howl({
@@ -54,7 +63,8 @@
 		sprite: {
 			next: [0, 124.98866213151926],
 			lose: [2000, 1457.1882086167802]
-		}
+		},
+		volume: $sfxVolume
 	});
 
 	const gameMusic = new Howl({
@@ -68,7 +78,8 @@
 			win: [30000, 2000],
 			buildup: [33000, 48000]
 		},
-		rate: 1.5
+		rate: 1.5,
+		volume: $musicVolume
 	});
 
 	let musicId: number;
@@ -89,36 +100,42 @@
 		// gameSounds.play('lose');
 		gameMusic.stop(musicId);
 		musicId = gameMusic.play('loose');
+		gameMusic.volume($sfxVolume, musicId);
 		gameMusic.loop(false, musicId);
 	}
 	function load() {
 		gameState = GameState.Starting;
 	}
 	function start() {
-		gameMusic.stop()
-		reset();
+		gameMusic.stop(musicId)
+		reset(false);
 		nChars =
 			Math.floor(Math.min(window?.innerWidth || 720, 720) / charSize / 1.4) - (ngram.length % 2);
 			nChars += 1 - (nChars % 2);
-		if ($music) {
+		if ($musicVolume) {
 			if (!gameMusic.playing(musicId)) musicId = gameMusic.play('buildup');
 			gameMusic.on("end", () => gameMusic.play('loop'), musicId)
 		}
 	}
 	function resume() {
 		gameMusic.stop(musicId);
-		if (music)
+		if ($musicVolume)
 			musicId = gameMusic.play(choose(['loop', 'loopTwo', 'loopThree']));
 		reset();
 	}
-	function reset() {
+	function reset(withSound: boolean = true) {
 		cancelDeathTimer();
 		if (ngram) ngramHistory = [...ngramHistory, ngram];
 		ngram = chooseNgram();
+		// remove ngram from the subset so there are no repeats
+		const indexToRemove = subset.indexOf(ngram)
+		subset = [...subset.slice(0, indexToRemove), ...subset.slice(indexToRemove + 1)]
+		// will they really keep playing after 2000+ ngrams? maybe. do them the courtesy
+		if (subset.length < 2) subset = [...originalSubset]
 		// nChars = nChars + ((nChars + ngram.length) % 2) * (1 - ((ngram.length % 2) * 2))
 		gameState = GameState.Guessing;
 		startDeathTimer();
-		gameSounds.play('next');
+		if (withSound) gameSounds.play('next');
 	}
 	function undo() {
 		if (ngramHistory.length > 0) {
@@ -144,7 +161,7 @@
 		gameSounds.mute(false);
 		gameMusic.mute(false);
 		if (gameState == GameState.Loading) start();
-		else reset();
+		else reset(false);
 	});
 	onDestroy(() => {
 		cancelDeathTimer();
@@ -173,9 +190,9 @@
 			<div class="text-container">
 				<RandomText length={nChars} letters={alphabet} />
 				<br />
-				<RandomText length={Math.floor((nChars - 3) / 2)} letters={alphabet} /><span class="ngram"
+				<RandomText length={Math.floor((nChars - 3) / 2)} letters={alphabet} />{#key ngram}<span class="ngram" in:typewriter={{speed: 70}}
 					>{ngram}</span
-				><RandomText
+				>{/key}<RandomText
 					length={nChars - 3 - Math.floor(Math.abs((nChars - 3) / 2))}
 					letters={alphabet}
 				/>
@@ -188,7 +205,7 @@
 			</div>
 			<div class="button-container">
 				<button class="undo-button" on:click={undo} disabled={ngramHistory.length === 0}>←</button>
-				<button class="defuse-button" on:mousedown={reset}>Defuse</button>
+				<button class="defuse-button" on:mousedown={() => reset()}>Defuse</button>
 			</div>
 		</div>
 		<div class="indicator">↓</div>
@@ -247,7 +264,7 @@
 	.text-container {
 		font-family: 'Compagnon Medium', 'Courier', monospace;
 		font-size: 2em;
-		color: gray;
+		color: #ddd;
 		pointer-events: none;
 		/* white-space: nowrap; */
 		-webkit-user-select: none;
@@ -286,6 +303,7 @@
 		color: black;
 		width: 3ch;
 		display: inline-block;
+		position: relative;
 		text-align: center;
 	}
 	button {

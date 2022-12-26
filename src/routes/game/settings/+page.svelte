@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { difficulty, maxGuessingTime, music } from '$lib/store';
+	import { difficulty, maxGuessingTime, musicVolume, sfxVolume } from '$lib/store';
 </script>
 
 <div class="settings-area">
@@ -10,7 +10,9 @@
 			<input
 				id="maxGuessingTime"
 				type="number"
-                size="1"
+                size="2"
+				min="3"
+				max="14"
 				placeholder="Timeout in seconds"
 				bind:value={$maxGuessingTime}
 			/>
@@ -27,11 +29,25 @@
 			/>
 		</div>
 		<div class="form-control">
-			<label for="music">Music</label>
+			<label for="musicVolume">Music volume</label>
 			<input
-				id="music"
-				type="checkbox"
-				bind:checked={$music}
+				id="musicVolume"
+				type="range"
+				min="0"
+				max="1"
+				step="0.05"
+				bind:value={$musicVolume}
+			/>
+		</div>
+		<div class="form-control">
+			<label for="sfxVolume">Sound effects volume</label>
+			<input
+				id="sfxVolume"
+				type="range"
+				min="0"
+				max="1"
+				step="0.05"
+				bind:value={$sfxVolume}
 			/>
 		</div>
 		<p>

@@ -14,7 +14,8 @@ import { browser } from '$app/environment';
 
 export const maxGuessingTime = writable<number>(); // seconds
 export const difficulty = writable<number>();
-export const music = writable<boolean>();
+export const musicVolume = writable<number>();
+export const sfxVolume = writable<number>();
 
 function linkToLocalStorage<T>(w: Writable<T>, key: string, defaultValue: T) {
     w.set(JSON.parse(localStorage.getItem(key) || "null") || defaultValue);
@@ -26,5 +27,6 @@ function linkToLocalStorage<T>(w: Writable<T>, key: string, defaultValue: T) {
 if (browser) {
     linkToLocalStorage<number>(maxGuessingTime, "maxGuessingTime", 5)
     linkToLocalStorage<number>(difficulty, "difficulty", 1)
-    linkToLocalStorage<boolean>(music, "music", true)
+    linkToLocalStorage<number>(musicVolume, "musicVolume", 0.75)
+    linkToLocalStorage<number>(sfxVolume, "sfxVolume", 0.75)
 }
