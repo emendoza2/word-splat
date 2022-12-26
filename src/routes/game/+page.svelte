@@ -152,7 +152,10 @@
 	}
 
 	function handleKeyup(e: KeyboardEvent) {
-		if (e.key === ' ') reset();
+		if (e.key === ' ') {
+			if (gameState == GameState.Dead) resume();
+			else reset();
+		}
 	}
 
 	onMount(() => {
