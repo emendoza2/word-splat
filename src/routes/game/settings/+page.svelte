@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { difficulty, maxGuessingTime } from '$lib/store';
+	import { difficulty, maxGuessingTime, music } from '$lib/store';
 </script>
 
 <div class="settings-area">
@@ -26,12 +26,19 @@
 				bind:value={$difficulty}
 			/>
 		</div>
+		<div class="form-control">
+			<label for="music">Music</label>
+			<input
+				id="music"
+				type="checkbox"
+				bind:checked={$music}
+			/>
+		</div>
 		<p>
 			<a class="start-button" href="/game">Start</a>
 		</p>
 		<p>
 			<small>
-				Music by bensound.com
 				Sounds from mixkit.com
 			</small>
 		</p>

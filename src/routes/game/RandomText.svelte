@@ -23,7 +23,7 @@
 
 	async function draw() {
 		await tick();
-		const randomNumbers = listGenerator(randomInt(3), () => randomInt(length - 1));
+		const randomNumbers = listGenerator(randomInt(3), () => randomInt(length));
 		randomNumbers.forEach(mutateRandomLetter); // side effects
 		// randomLetters = randomLetters // side effects
 		// requestAnimationFrame(draw)
@@ -31,7 +31,7 @@
 
 	let interval: number;
 	onMount(() => {
-		interval = requestInterval(draw, 66);
+		interval = requestInterval(draw, 500/length);
 	});
     onDestroy(() => {
         if (interval) cancelAnimationFrame(interval);

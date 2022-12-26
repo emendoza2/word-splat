@@ -2,7 +2,7 @@
 	import choose from '../../util/choose';
 	import ngramList from '../../util/ngramList';
 	import wordList from '../../util/wordList';
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import { draw, crossfade, slide } from 'svelte/transition';
 	import { Howl, Howler } from 'howler';
 	// export const prerender = false; // disable ssr for this
@@ -15,11 +15,12 @@
 
 	enum GameState {
 		Loading,
+		Starting,
 		Guessing,
 		Dead
 	}
 
-	import { difficulty, maxGuessingTime } from '$lib/store.js';
+	import { difficulty, maxGuessingTime, music } from '$lib/store.js';
 	const maxDifficulty = 3;
 	const undoGuessingTime = 3;
 	const charSize = 40;
@@ -32,8 +33,7 @@
 		Math.floor((ngramList.length / maxDifficulty) * ($difficulty - 1)),
 		Math.floor((ngramList.length / maxDifficulty) * $difficulty)
 	);
-	const chooseNgram = () => choose(subset); // todo: convert to partial
-
+	
 	let ngram: string;
 	let ngramHistory: string[] = [];
 	let hiddenWord: string;
@@ -42,6 +42,12 @@
 	let gameState = GameState.Loading;
 	let deathTimer: number | NodeJS.Timeout;
 	let deathIcon: string;
+
+	// slowly walk down the ngram list
+	const chooseNgram = () => {
+		const ngramIndex = ngram ? subset.indexOf(ngram) : 0;
+		return choose(subset.slice(Math.max(ngramIndex - (gameState == GameState.Dead ? 100 : 0), 0), Math.min(ngramIndex + 100, subset.length))); // todo: convert to partial
+	}
 
 	const gameSounds = new Howl({
 		src: ['sounds/gameSounds.webm', 'sounds/gameSounds.mp3'],
@@ -52,8 +58,20 @@
 	});
 
 	const gameMusic = new Howl({
-		src: ['sounds/jazzcomedy.mp3']
-	})
+		src: ['sounds/gameMusic.webm', 'sounds/gameMusic.ogg', 'sounds/gameMusic.mp3'],
+		loop: true,
+		sprite: {
+			loop: [0, 8000],
+			loopTwo: [9000, 8000],
+			loopThree: [18000, 8000],
+			loose: [27000, 2000],
+			win: [30000, 2000],
+			buildup: [33000, 48000]
+		},
+		rate: 1.5
+	});
+
+	let musicId: number;
 
 	function cancelDeathTimer() {
 		if (deathTimer) clearTimeout(deathTimer);
@@ -68,17 +86,39 @@
 		hiddenWord = getWordForNgram(ngram);
 		gameState = GameState.Dead;
 		deathIcon = choose([':(', 'bye!', '🗿', '☠']);
-		gameSounds.play("lose")
+		// gameSounds.play('lose');
+		gameMusic.stop(musicId);
+		musicId = gameMusic.play('loose');
+		gameMusic.loop(false, musicId);
+	}
+	function load() {
+		gameState = GameState.Starting;
+	}
+	function start() {
+		gameMusic.stop()
+		reset();
+		nChars =
+			Math.floor(Math.min(window?.innerWidth || 720, 720) / charSize / 1.4) - (ngram.length % 2);
+			nChars += 1 - (nChars % 2);
+		if ($music) {
+			if (!gameMusic.playing(musicId)) musicId = gameMusic.play('buildup');
+			gameMusic.on("end", () => gameMusic.play('loop'), musicId)
+		}
+	}
+	function resume() {
+		gameMusic.stop(musicId);
+		if (music)
+			musicId = gameMusic.play(choose(['loop', 'loopTwo', 'loopThree']));
+		reset();
 	}
 	function reset() {
 		cancelDeathTimer();
 		if (ngram) ngramHistory = [...ngramHistory, ngram];
-		console.log(ngramHistory);
 		ngram = chooseNgram();
 		// nChars = nChars + ((nChars + ngram.length) % 2) * (1 - ((ngram.length % 2) * 2))
 		gameState = GameState.Guessing;
 		startDeathTimer();
-		gameSounds.play("next")
+		gameSounds.play('next');
 	}
 	function undo() {
 		if (ngramHistory.length > 0) {
@@ -91,7 +131,6 @@
 	}
 	function getWordForNgram(ngram: string) {
 		const regexp = new RegExp(ngram);
-		console.log(wordList.filter((word) => regexp.test(word)).slice(0, 10));
 		return choose(wordList.filter((word) => regexp.test(word)).slice(0, 10)); // yeuch.. maybe could be partial or called
 	}
 
@@ -100,11 +139,18 @@
 	}
 
 	onMount(() => {
-		reset(); // i.e. start
-		nChars =
-			Math.floor(Math.min(window?.innerWidth || 720, 720) / charSize / 1.4) - (ngram.length % 2);
-		nChars += 1 - (nChars % 2);
-		gameMusic.play();
+		// reset(); // i.e. start
+		gameMusic.stop(musicId);
+		gameSounds.mute(false);
+		gameMusic.mute(false);
+		if (gameState == GameState.Loading) start();
+		else reset();
+	});
+	onDestroy(() => {
+		cancelDeathTimer();
+		gameSounds.mute();
+		gameMusic.mute();
+		gameMusic.stop(musicId)
 	});
 
 	// TODO figure out the height stuff
@@ -114,20 +160,27 @@
 
 <div class="game-container">
 	<a class="settings-button" href="game/settings">⚙</a>
+	{#if gameState == GameState.Starting}
+		<div class="start-container">
+			<div class="button-container">
+				<button class="defuse-button" on:click={start}>Start</button>
+			</div>
+		</div>
+	{/if}
 	{#if gameState == GameState.Guessing}
 		<div class="play-area">
 			<div class="hidden-word">??????</div>
 			<div class="text-container">
-					<RandomText length={nChars} letters={alphabet} />
-					<br />
-					<RandomText length={Math.floor((nChars - 3) / 2)} letters={alphabet} /><span class="ngram"
-						>{ngram}</span
-					><RandomText
-						length={nChars - 3 - Math.floor(Math.abs((nChars - 3) / 2))}
-						letters={alphabet}
-					/>
-					<br />
-					<RandomText length={nChars} letters={alphabet} />
+				<RandomText length={nChars} letters={alphabet} />
+				<br />
+				<RandomText length={Math.floor((nChars - 3) / 2)} letters={alphabet} /><span class="ngram"
+					>{ngram}</span
+				><RandomText
+					length={nChars - 3 - Math.floor(Math.abs((nChars - 3) / 2))}
+					letters={alphabet}
+				/>
+				<br />
+				<RandomText length={nChars} letters={alphabet} />
 				<!-- {#each Array(3) as _, i}
                 {/each} -->
 				<!-- {#each Array(3) as _, i}
@@ -135,7 +188,7 @@
 			</div>
 			<div class="button-container">
 				<button class="undo-button" on:click={undo} disabled={ngramHistory.length === 0}>←</button>
-				<button class="defuse-button" on:click={reset}>Defuse</button>
+				<button class="defuse-button" on:mousedown={reset}>Defuse</button>
 			</div>
 		</div>
 		<div class="indicator">↓</div>
@@ -166,7 +219,7 @@
 			</div>
 			<div class="button-container">
 				<button class="undo-button" on:click={undo} disabled={ngramHistory.length === 0}>←</button>
-				<button class="resume-button" on:click={reset}>Resume</button>
+				<button class="resume-button" on:click={resume}>Resume</button>
 			</div>
 		</div>
 		<div class="indicator">{deathIcon}</div>
@@ -271,6 +324,13 @@
 	.resume-button:active {
 		background-color: black;
 		color: white;
+	}
+	.start-container {
+		position: absolute;
+		height: 100%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
 	}
 	.undo-button {
 		/* box-shadow: none;
