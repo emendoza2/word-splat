@@ -4,6 +4,7 @@
     <link rel="preload" href="/fonts/Compagnon-Bold.woff2" as="font" />
     <link rel="preload" href="/fonts/Compagnon-Medium.woff2" as="font" />
     <link rel="preload" href="/fonts/Compagnon-Roman.woff2" as="font" />
+    <link rel="manifest" href="/manifest.json" />
     <style>
         html, body {
             margin: 0;
