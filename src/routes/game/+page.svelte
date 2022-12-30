@@ -247,6 +247,11 @@
 </div>
 
 <style>
+	:global(body, html) {
+		min-height: 100vh;
+		/* mobile viewport bug fix */
+		min-height: -webkit-fill-available;
+	}
 	.game-container {
 		display: flex;
 		flex-direction: column;
@@ -256,6 +261,8 @@
 		font-size: 2em;
 		font-family: 'Compagnon Roman', 'Courier New', 'Courier', monospace;
 		min-height: 100vh;
+		/* mobile viewport bug fix */
+		min-height: -webkit-fill-available;
 		max-width: 100%;
 		overflow-x: auto;
 		-webkit-user-select: none;
@@ -313,6 +320,7 @@
 		border: none;
 		border-radius: 1rem;
 		padding: 0.3rem 2rem 1rem 2rem;
+		color: black;
 		box-shadow: 0 0.5rem black;
 		font-family: 'Compagnon Bold', 'Courier New', 'Courier', monospace;
 		transform: translateY(-0.5rem);
