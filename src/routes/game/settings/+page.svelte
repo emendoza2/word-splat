@@ -135,12 +135,18 @@
 	input[type='range']::-webkit-slider-thumb {
 		-webkit-appearance: none;
 		appearance: none;
-		width: 9px;
-		height: 9px;
+		width: 18px;
+		height: 18px;
 		background: #fff;
 		cursor: pointer;
 		border-radius: 30px;
 		outline: none;
+	}
+	input[type="range"]::-webkit-slider-runnable-track {
+		background-color: #aaa;
+		border-radius: 30px;
+		border: none;
+		height: 100%;
 	}
 
 	/* Moz */
